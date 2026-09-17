@@ -29,25 +29,49 @@ In order to run this sample app or if you want to develop your own application y
     1. Make sure `Enterprise` is checked under *API associations*
     2. Make sure `enterprise` scope is added under *Allowed scopes*
     3. For web apps, make sure `Allow Offline Access` is checked.
- 4. Select an appropriate application type. If you just want to run the sample app `Service` type will be enough. If you don't know which type to choose for a user-facing application check out https://developer.bentley.com/apis/overview/authorization.
- 5. Fill in redirect url if application type is not `Service`. This is the url to your application which authentication service will come back to once user is logged in.
+ 4. Select an appropriate application type. If you want to run the sample app select `Web App` type. If you don't know which type to choose for a user-facing application check out https://developer.bentley.com/apis/overview/authorization.
+ 5. Fill in redirect url. This is the url to your application which authentication service will come back to once user is logged in.
  6. Click `Save`
  7. Make sure to copy client secret and close the dialog.
  8. A page should appear with created api client. In order to get tokens you'll also need the client id that should be shown in this window.
  9. You should be able to authenticate now by using client id and secret with the appropriate flow.
 
-### Console commands to get the token via service client credentials
+### Commands to get the token via Web App flow
+
+
+#### Login using the /authorize endpoint
+
+```text
+Open the following URL in a browser:
+
+https://ims.bentley.com/connect/authorize?response_type=code&client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&scope=enterprise&state=YOUR_STATE
+
+For example if the redirect url is http://localhost:5001/callback:
+
+https://ims.bentley.com/connect/authorize?response_type=code&client_id=YOUR_CLIENT_ID&redirect_uri=http%3A%2F%2Flocalhost%3A5001%2Fcallback&scope=enterprise&state=12345
+
+After successful login, Bentley IMS redirects to the configured redirect URI:
+
+https://localhost:5001/callback?code=AUTHORIZATION_CODE&state=12345
+
+Copy the code value from the callback URL. The authorization code is short-lived, so use it promptly to request the access token.
+
+Note: The redirect_uri must exactly match one of the redirect URIs configured for the Web App.
+```
 
 #### Bash
 
 ```sh
-curl --request POST \
-  --url 'https://ims.bentley.com/connect/token' \
-  --header 'content-type: application/x-www-form-urlencoded' \
-  --data-urlencode grant_type=client_credentials \
-  --data-urlencode scope=enterprise \
-  --data-urlencode client_id=YOUR_CLIENT_ID \
-  --data-urlencode client_secret=YOUR_CLIENT_SECRET
+curl --request POST ^
+  --url "https://ims.bentley.com/connect/token" ^
+  --header "content-type: application/x-www-form-urlencoded" ^
+  --data-urlencode "grant_type=authorization_code" ^
+  --data-urlencode "code=YOUR_AUTHORIZATION_CODE" ^
+  --data-urlencode "client_id=YOUR_CLIENT_ID" ^
+  --data-urlencode "client_secret=YOUR_CLIENT_SECRET" ^
+  --data-urlencode "redirect_uri=YOUR_REDIRECT_URI"
+
+Note: Do not encode redirect_uri
 ```
 
 #### Powershell
@@ -55,11 +79,16 @@ curl --request POST \
 ```pwsh
 (Invoke-WebRequest -Method 'Post' `
    -Uri 'https://ims.bentley.com/connect/token' `
-   -Headers @{ 'content-type' = 'application/x-www-form-urlencoded' } `
-   -Body @{ `
-      grant_type='client_credentials'; `
-      scope='enterprise'; `
-      client_id='YOUR_CLIENT_ID'; `
-      client_secret='YOUR_CLIENT_SECRET' `
+   -Headers @{
+      'content-type' = 'application/x-www-form-urlencoded'
+   } `
+   -Body @{
+      grant_type='authorization_code'
+      code='YOUR_AUTHORIZATION_CODE'
+      client_id='YOUR_CLIENT_ID'
+      client_secret='YOUR_CLIENT_SECRET'
+      redirect_uri='YOUR_REDIRECT_URI'
    }).Content
+
+Note: Do not encode redirect_uri
 ```
